@@ -1,5 +1,6 @@
 # Event Manager App
 
+Before run, download and install [Node.js](https://nodejs.org/en/download)
 
 ## How to Run
 
@@ -21,8 +22,9 @@
 - State is managed with Zustand; form handling uses React Hook Form.
 - All events are stored in-memory and will reset on page reload.
 - The UI is styled with Tailwind CSS and is mobile-friendly.
+- You can search all events by name.
 
 ## Screenshot
 
-![Screenshot of Event Manager at /events](./apps/event-manager/app/assets/app-screenshort.png)
+![Screenshot of Event Manager at /events](./apps/event-manager/app/assets/event-manager.png)
 

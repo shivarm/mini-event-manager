@@ -13,33 +13,61 @@ interface EventState {
   events: EventItem[];
   addEvent: (event: Omit<EventItem, "id">) => void;
   deleteEvent: (id: string) => void;
+  search: string;
+  setSearch: (search: string) => void;
 }
 
+const getInitialEvents = (): EventItem[] => {
+  if (typeof window !== "undefined") {
+    const stored = localStorage.getItem("events");
+    if (stored) return JSON.parse(stored);
+  }
+  return [];
+};
+
 const useEventStore = create<EventState>((set) => ({
-  events: [],
+  events: getInitialEvents(),
   addEvent: (event) =>
-    set((state) => ({
-      events: [
+    set((state) => {
+      const newEvents = [
         ...state.events,
         { id: Date.now().toString(), ...event },
-      ],
-    })),
+      ];
+      if (typeof window !== "undefined") {
+        localStorage.setItem("events", JSON.stringify(newEvents));
+      }
+      return { events: newEvents };
+    }),
   deleteEvent: (id) =>
-    set((state) => ({
-      events: state.events.filter((e) => e.id !== id),
-    })),
+    set((state) => {
+      const newEvents = state.events.filter((e) => e.id !== id);
+      if (typeof window !== "undefined") {
+        localStorage.setItem("events", JSON.stringify(newEvents));
+      }
+      return { events: newEvents };
+    }),
+  search: "",
+  setSearch: (search) => set(() => ({ search })),
 }));
+
+
 
 export default function EventsPage() {
   const { register, handleSubmit, reset } = useForm<{ name: string; date: string }>();
   const events = useEventStore((state) => state.events);
   const addEvent = useEventStore((state) => state.addEvent);
   const deleteEvent = useEventStore((state) => state.deleteEvent);
+  const search = useEventStore((state) => state.search);
+  const setSearch = useEventStore((state) => state.setSearch);
 
   const onSubmit = (data: { name: string; date: string }) => {
     addEvent(data);
     reset();
   };
+
+  const filteredEvents = events.filter((event) =>
+    event.name.toLowerCase().includes(search.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 px-2">
@@ -66,11 +94,18 @@ export default function EventsPage() {
             Add Event
           </button>
         </form>
+        <input
+          type="text"
+          placeholder="Search events by name..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+          className="mt-6 border border-indigo-300 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400 text-lg w-full text-center"
+        />
         <ul className="mt-8 space-y-3 w-full flex flex-col items-center">
-          {events.length === 0 && (
-            <li className="text-center text-gray-400">No events added yet.</li>
+          {filteredEvents.length === 0 && (
+            <li className="text-center text-gray-400">No events found.</li>
           )}
-          {events.map((event) => (
+          {filteredEvents.map((event) => (
             <li
               key={event.id}
               className="flex flex-col sm:flex-row sm:items-center sm:justify-between bg-indigo-50 rounded-lg px-4 py-3 shadow w-full"
